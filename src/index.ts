@@ -1,4 +1,4 @@
-const path = require('path');
+import path from 'path';
 
 function escapeFileName(str: string) {
   return `svg-${path.basename(str, '.svg')}`
@@ -12,18 +12,23 @@ const transform = (src: string, filePath: string) => {
     return src;
   }
 
-  const name = escapeFileName(filePath);
+  const { base: pathname, name: filename } = path.parse(filePath);
+  const functionName = escapeFileName(filePath);
 
   return {
     code: `
-      const React = require('react');
-      function ${name}(props) {
-        return React.createElement(
-          'svg', 
-          Object.assign({}, props, {'data-file-name': ${name}.name})
-        );
-      }
-      module.exports = ${name};
+    const React = require('react');
+    const ${functionName} = (props) => 
+    {
+        return React.createElement('svg', { 
+          ...props, 
+        'data-jest-file-name': '${pathname}',
+        'data-jest-svg-name': '${filename}',
+        'data-testid': '${filename}'
+      });
+    }
+    module.exports.default = ${functionName};
+    module.exports.ReactComponent = ${functionName};
     `,
   };
 };
